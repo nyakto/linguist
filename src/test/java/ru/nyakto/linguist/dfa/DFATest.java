@@ -51,4 +51,24 @@ public class DFATest {
 		Assert.assertTrue("shouldn't match word 'tcher'", !testWord(matcher, "tcher"));
 		Assert.assertTrue("shouldn't match word 'random'", !testWord(matcher, "random"));
 	}
+
+	@Test
+	public void basicMinimizationTest() {
+		final DFA<State, Character> originalMatcher = createWordsMatcher(Arrays.asList(
+			"this",
+			"is"
+		));
+		final DFA<State, Character> matcher = originalMatcher.minimize();
+		Assert.assertEquals(6, originalMatcher.getStates().size());
+		Assert.assertEquals(4, matcher.getStates().size());
+		Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
+		Assert.assertTrue("should match word 'this'", testWord(matcher, "this"));
+		Assert.assertTrue("should match word 'is'", testWord(matcher, "is"));
+		Assert.assertTrue("shouldn't match word 'random'", !testWord(matcher, "random"));
+		Assert.assertTrue("shouldn't match word 't'", !testWord(matcher, "t"));
+		Assert.assertTrue("shouldn't match word 'th'", !testWord(matcher, "th"));
+		Assert.assertTrue("shouldn't match word 'thi'", !testWord(matcher, "thi"));
+		Assert.assertTrue("shouldn't match word 'i'", !testWord(matcher, "i"));
+		Assert.assertTrue("shouldn't match word 's'", !testWord(matcher, "s"));
+	}
 }
