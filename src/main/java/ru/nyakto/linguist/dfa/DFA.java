@@ -43,6 +43,7 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
 	) {
 		final DFA<S, Symbol> result = new DFA<>(stateConstructor);
 		final Set<T> reachable = findReachableStates();
+		final Map<T, Map<Symbol, T>> reverseTransitions = buildReverseTransitionsMap(reachable);
 		return result;
 	}
 
@@ -61,6 +62,16 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
 				));
 		}
 		return reachable;
+	}
+
+	protected Map<T, Map<Symbol, T>> buildReverseTransitionsMap(Set<T> states) {
+		final Map<T, Map<Symbol, T>> result = new HashMap<>();
+		transitions.forEach((src, srcTransitions) -> srcTransitions.forEach((by, dst) -> {
+			if (states.contains(dst)) {
+				result.computeIfAbsent(dst, (key) -> new HashMap<>()).put(by, src);
+			}
+		}));
+		return result;
 	}
 
     public static <S> DFA<State, S> create() {
