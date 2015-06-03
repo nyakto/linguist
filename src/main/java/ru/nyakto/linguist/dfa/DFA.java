@@ -30,7 +30,7 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
 	public DFA<State, Symbol> minimize() {
 		return minimize(
 			State::new,
-			(a, b) -> true,
+			null,
 			null
 		);
 	}
@@ -43,6 +43,49 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
 		final DFA<S, Symbol> result = new DFA<>(stateConstructor);
 		final Set<T> reachable = findReachableStates();
 		final Map<T, Map<Symbol, T>> reverseTransitions = buildReverseTransitionsMap(reachable);
+		final Queue<Set<T>> task = new LinkedList<>();
+		final Set<T> processedStates = new HashSet<>();
+		task.add(
+			reachable.stream()
+				.filter(State::isFinal)
+				.collect(Collectors.toSet())
+		);
+		final Map<T, S> old2new = new HashMap<>();
+		while (!task.isEmpty()) {
+			final Set<T> states = task.remove();
+			processedStates.addAll(states);
+			for (Set<T> equalStates : splitByEquality(states, reverseTransitions, compare)) {
+				final S newState = equalStates.contains(getInitialState())
+					? result.getInitialState()
+					: result.createState();
+				if (equalStates.iterator().next().isFinal()) {
+					result.markStateAsFinal(newState);
+				}
+				if (merge != null) {
+					merge.accept(equalStates, newState);
+				}
+				equalStates.forEach(oldState -> old2new.put(oldState, newState));
+				final Set<T> unhandledSourceStates = equalStates.stream()
+					.map(
+						state -> Optional.ofNullable(reverseTransitions.get(state))
+							.map(Map::values)
+							.orElseGet(Collections::emptySet)
+					)
+					.collect(HashSet<T>::new, Collection::addAll, Collection::addAll)
+					.stream()
+					.filter(state -> !processedStates.contains(state))
+					.collect(Collectors.toSet());
+				if (!unhandledSourceStates.isEmpty()) {
+					task.add(unhandledSourceStates);
+				}
+			}
+		}
+		old2new.forEach((oldState, newState) -> Optional.ofNullable(transitions.get(oldState))
+			.ifPresent(transitions -> transitions.forEach((by, to) -> {
+				Optional.ofNullable(old2new.get(to)).ifPresent(newTargetState -> {
+					result.addTransition(newState, by, newTargetState);
+				});
+			})));
 		return result;
 	}
 
@@ -75,7 +118,7 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
 
 	protected Collection<? extends Set<T>> splitByEquality(
 		Set<T> states,
-		Map<T, Map<Symbol, T>> reverseMap,
+		Map<T, Map<Symbol, T>> reverseTransitions,
 		BiPredicate<T, T> compare
 	) {
 		if (states.size() <= 1) {
@@ -83,7 +126,7 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
 		}
 		final Map<Set<Symbol>, Set<T>> equalityClasses = states.stream()
 			.collect(Collectors.groupingBy(
-				(state) -> Optional.ofNullable(reverseMap.get(state))
+				(state) -> Optional.ofNullable(reverseTransitions.get(state))
 					.map(Map::keySet)
 					.orElseGet(Collections::emptySet),
 				Collectors.toSet()
