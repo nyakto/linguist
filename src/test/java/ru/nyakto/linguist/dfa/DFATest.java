@@ -44,5 +44,11 @@ public class DFATest {
 		));
 		Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
 		Assert.assertTrue("should match word 'this'", testWord(matcher, "this"));
+		Assert.assertTrue("should match word 'is'", testWord(matcher, "is"));
+		Assert.assertTrue("should match word 'test'", testWord(matcher, "test"));
+		Assert.assertTrue("should match word 'matcher'", testWord(matcher, "matcher"));
+		Assert.assertTrue("shouldn't match word 'tes'", !testWord(matcher, "tes"));
+		Assert.assertTrue("shouldn't match word 'tcher'", !testWord(matcher, "tcher"));
+		Assert.assertTrue("shouldn't match word 'random'", !testWord(matcher, "random"));
 	}
 }
