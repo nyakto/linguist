@@ -24,10 +24,10 @@ public class DFATest {
 		return matcher;
 	}
 
-	protected boolean testWord(DFA<State, Character> matcher, CharSequence word) {
+	protected boolean testWord(DFA<State, Character> matcher, String word) {
 		final Walker<Character> walker = matcher.walker();
-		for (int i = 0, len = word.length(); i < len; ++i) {
-			if (!walker.go(word.charAt(i))) {
+		for (char by : word.toCharArray()) {
+			if (!walker.go(by)) {
 				return false;
 			}
 		}
@@ -42,7 +42,7 @@ public class DFATest {
 			"test",
 			"matcher"
 		));
-		Assert.assertTrue("shouldn't match empty string", testWord(matcher, ""));
+		Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
 		Assert.assertTrue("should match word 'this'", testWord(matcher, "this"));
 	}
 }
