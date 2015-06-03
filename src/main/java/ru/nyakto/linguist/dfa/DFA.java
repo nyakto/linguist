@@ -81,15 +81,13 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
 		if (states.size() <= 1) {
 			return Collections.singletonList(states);
 		}
-		final Map<Set<Symbol>, Set<T>> equalityClasses = new HashMap<>();
-		for (T state : states) {
-			equalityClasses.computeIfAbsent(
-				Optional.ofNullable(reverseMap.get(state))
+		final Map<Set<Symbol>, Set<T>> equalityClasses = states.stream()
+			.collect(Collectors.groupingBy(
+				(state) -> Optional.ofNullable(reverseMap.get(state))
 					.map(Map::keySet)
 					.orElseGet(Collections::emptySet),
-				(bySet) -> new HashSet<>()
-			).add(state);
-		}
+				Collectors.toSet()
+			));
 		if (compare == null) {
 			return equalityClasses.values().stream()
 				.map((equalStates) -> (Set<T>) new HashSet<>(equalStates))
