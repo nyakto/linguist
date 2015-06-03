@@ -4,14 +4,13 @@ import ru.nyakto.linguist.FSM;
 import ru.nyakto.linguist.State;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
-    protected final Map<T, Map<Symbol, T>> transitions = new ConcurrentHashMap<>();
+	protected final Map<T, Map<Symbol, T>> transitions = new HashMap<>();
 
     public DFA(BiFunction<FSM, Long, T> stateConstructor) {
         super(stateConstructor);
@@ -24,11 +23,11 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
 
     @Override
     public void addTransition(T from, Symbol by, T to) {
-        transitions.computeIfAbsent(from, (src) -> new ConcurrentHashMap<>()).put(by, to);
+	    transitions.computeIfAbsent(from, (src) -> new HashMap<>()).put(by, to);
     }
 
 	public T addTransition(T from, Symbol by) {
-		return transitions.computeIfAbsent(from, (src) -> new ConcurrentHashMap<>())
+		return transitions.computeIfAbsent(from, (src) -> new HashMap<>())
 			.computeIfAbsent(by, (symbol) -> createState());
 	}
 

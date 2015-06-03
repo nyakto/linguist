@@ -1,14 +1,14 @@
 package ru.nyakto.linguist;
 
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.BiFunction;
 
 abstract public class FSM<T extends State, Symbol> implements Cloneable {
     private final T initialState;
-    private final Set<Long> finalStateIds = new ConcurrentSkipListSet<>();
-    protected final StateFactory<T> stateFactory;
-    protected final Set<State> states = new ConcurrentSkipListSet<>();
+	private final Set<Long> finalStateIds = new HashSet<>();
+	protected final StateFactory<T> stateFactory;
+	protected final Set<State> states = new HashSet<>();
 
     public FSM(BiFunction<FSM, Long, T> stateConstructor) {
         stateFactory = new BasicStateFactory<>(this, stateConstructor);
