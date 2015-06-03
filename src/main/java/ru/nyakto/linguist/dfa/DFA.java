@@ -27,6 +27,11 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
         transitions.computeIfAbsent(from, (src) -> new ConcurrentHashMap<>()).put(by, to);
     }
 
+	public T addTransition(T from, Symbol by) {
+		return transitions.computeIfAbsent(from, (src) -> new ConcurrentHashMap<>())
+			.computeIfAbsent(by, (symbol) -> createState());
+	}
+
 	public DFA<State, Symbol> minimize() {
 		return minimize(
 			State::new,
