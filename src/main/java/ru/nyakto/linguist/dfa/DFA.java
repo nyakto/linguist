@@ -31,8 +31,7 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
 		return minimize(
 			State::new,
 			(a, b) -> true,
-			(oldStates, newState) -> {
-			}
+			null
 		);
 	}
 
@@ -71,6 +70,49 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
 				result.computeIfAbsent(dst, (key) -> new HashMap<>()).put(by, src);
 			}
 		}));
+		return result;
+	}
+
+	protected Collection<? extends Set<T>> splitByEquality(
+		Set<T> states,
+		Map<T, Map<Symbol, T>> reverseMap,
+		BiPredicate<T, T> compare
+	) {
+		if (states.size() <= 1) {
+			return Collections.singletonList(states);
+		}
+		final Map<Set<Symbol>, Set<T>> equalityClasses = new HashMap<>();
+		for (T state : states) {
+			equalityClasses.computeIfAbsent(
+				Optional.ofNullable(reverseMap.get(state))
+					.map(Map::keySet)
+					.orElseGet(Collections::emptySet),
+				(bySet) -> new HashSet<>()
+			).add(state);
+		}
+		if (compare == null) {
+			return equalityClasses.values().stream()
+				.map((equalStates) -> (Set<T>) new HashSet<>(equalStates))
+				.collect(Collectors.toList());
+		}
+		final Collection<Set<T>> result = new LinkedList<>();
+		for (Set<T> equalStates : equalityClasses.values()) {
+			while (!equalStates.isEmpty()) {
+				final Iterator<T> iterator = equalStates.iterator();
+				final T state = iterator.next();
+				iterator.remove();
+				final Set<T> newClass = new HashSet<>();
+				newClass.add(state);
+				while (iterator.hasNext()) {
+					final T testState = iterator.next();
+					if (compare.test(state, testState)) {
+						newClass.add(testState);
+						iterator.remove();
+					}
+				}
+				result.add(newClass);
+			}
+		}
 		return result;
 	}
 
