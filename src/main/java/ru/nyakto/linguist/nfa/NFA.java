@@ -17,7 +17,7 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     public NFAWalker<T, Symbol> walker(T state) {
         return new NFAWalker<>(
             this,
-            findLambdaReachableStates(getInitialState())
+            getInitialState()
         );
     }
 
@@ -46,16 +46,16 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
 
     public T addTransition(T from, Optional<Symbol> by) {
         final T to = createState();
-        addTransition(from, to);
+        addTransition(from, by, to);
         return to;
     }
 
-    protected Set<T> findLambdaReachableStates(T from) {
-        final Set<T> result = Optional.ofNullable(transitions.get(from))
-            .map(Map::values)
-            .orElseGet(Collections::emptySet)
-            .stream()
-            .collect(HashSet::new, Collection::addAll, Collection::addAll);
+    protected Set<T> findDirectLambdaReachableStates(T from) {
+        final Set<T> result = new HashSet<>(
+            Optional.ofNullable(transitions.get(from))
+                .map(transitions -> transitions.get(Optional.<Symbol>empty()))
+                .orElseGet(Collections::emptySet)
+        );
         result.add(from);
         return result;
     }
@@ -66,25 +66,26 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
         result.addAll(fromStates);
         task.addAll(fromStates);
         while (!task.isEmpty()) {
-            findLambdaReachableStates(task.remove()).stream()
+            findDirectLambdaReachableStates(task.remove()).stream()
                 .filter(result::add)
                 .forEach(task::add);
         }
         return result;
     }
 
-    protected Set<T> getDirectSymbolReachableStates(T from, Symbol by) {
+    protected Set<T> findDirectSymbolReachableStates(T from, Symbol by) {
         return Optional.ofNullable(transitions.get(from))
             .map(transitions -> transitions.get(Optional.of(by)))
             .orElseGet(Collections::emptySet);
     }
 
-    protected Set<T> findAllSymbolReachableStates(Set<T> fromStates, Symbol by) {
-        final Set<T> directSymbolReachable = findLambdaReachableStates(fromStates).stream()
-            .map(state -> getDirectSymbolReachableStates(state, by))
+    protected Set<T> findDirectSymbolReachableStates(Set<T> fromStates, Symbol by) {
+        return fromStates.stream()
+            .map(state -> findDirectSymbolReachableStates(state, by))
             .collect(HashSet::new, Collection::addAll, Collection::addAll);
-        return findLambdaReachableStates(
-            directSymbolReachable
-        );
+    }
+
+    public static <S> NFA<State, S> create() {
+        return new NFA<>(State::new);
     }
 }
