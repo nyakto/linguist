@@ -174,7 +174,9 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
             final Set<T> oldSrcState = task.remove();
             final S newSrcState = old2new.computeIfAbsent(oldSrcState, createNewState);
             for (Symbol by : findDirectTransitionSymbols(oldSrcState)) {
-                final Set<T> oldDstState = findDirectSymbolReachableStates(oldSrcState, by);
+                final Set<T> oldDstState = findLambdaReachableStates(
+                    findDirectSymbolReachableStates(oldSrcState, by)
+                );
                 final S newDstState = old2new.computeIfAbsent(oldDstState, createNewState);
                 result.addTransition(newSrcState, by, newDstState);
             }
