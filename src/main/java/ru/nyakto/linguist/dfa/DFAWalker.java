@@ -33,7 +33,7 @@ public class DFAWalker<T extends State, Symbol> implements Walker<Symbol> {
         return currentState.isFinal();
     }
 
-	public T getCurrentState() {
-		return currentState;
-	}
+    public T getCurrentState() {
+        return currentState;
+    }
 }
