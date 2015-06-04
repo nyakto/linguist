@@ -13,7 +13,7 @@ abstract public class FSM<T extends State, Symbol> implements Cloneable {
 
     public FSM(BiFunction<FSM, Long, T> stateConstructor) {
         stateFactory = new BasicStateFactory<>(this, stateConstructor);
-        initialState = stateFactory.createState();
+        initialState = createState();
     }
 
     public final T getInitialState() {

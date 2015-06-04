@@ -26,13 +26,14 @@ public class State {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        State cmp = (State) o;
-
-        return id == cmp.id && fsm.equals(cmp.fsm);
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        return id == ((State) obj).id;
     }
 
     @Override

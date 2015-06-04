@@ -40,6 +40,38 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
             .add(to);
     }
 
+    public void addTransition(T from, NFA<T, Symbol> by, BiConsumer<T, T> copy, T to) {
+        final Function<T, T> copyState = (oldState) -> {
+            final T newState = createState();
+            if (oldState.isFinal()) {
+                addTransition(newState, to);
+            }
+            if (copy != null) {
+                copy.accept(oldState, newState);
+            }
+            return newState;
+        };
+
+        final Map<T, T> old2new = by.getStates().stream()
+            .collect(Collectors.toMap(old -> old, copyState));
+        addTransition(from, old2new.get(by.getInitialState()));
+        old2new.forEach((oldState, newState) -> Optional.ofNullable(by.transitions.get(oldState))
+            .filter(transitions -> !transitions.isEmpty())
+            .ifPresent(oldTransitions -> {
+                final Map<Optional<Symbol>, Set<T>> newStateTransitions = transitions.computeIfAbsent(
+                    newState,
+                    key -> new HashMap<>()
+                );
+                oldTransitions.forEach((symbol, target) -> {
+                    newStateTransitions.computeIfAbsent(symbol, key -> new HashSet<>()).addAll(
+                        target.stream()
+                            .map(old2new::get)
+                            .collect(Collectors.toSet())
+                    );
+                });
+            }));
+    }
+
     public T addTransition(T from, Symbol by) {
         return addTransition(from, Optional.ofNullable(by));
     }
@@ -51,6 +83,12 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     public T addTransition(T from, Optional<Symbol> by) {
         final T to = createState();
         addTransition(from, by, to);
+        return to;
+    }
+
+    public T addTransition(T from, NFA<T, Symbol> by, BiConsumer<T, T> copy) {
+        final T to = createState();
+        addTransition(from, by, copy, to);
         return to;
     }
 
