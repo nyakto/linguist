@@ -91,8 +91,8 @@ public class NFATest extends FSMTestHelper {
         addWordToMatcher(originalMatcher, "test");
         addWordToMatcher(originalMatcher, "matcher");
         final DFA<State, Character> matcher = originalMatcher.convertToDFA(State::new, null);
-        Assert.assertEquals(21, originalMatcher.getStates().size());
-        Assert.assertEquals(16, matcher.getStates().size());
+        Assert.assertEquals(22, originalMatcher.getStates().size());
+        Assert.assertEquals(17, matcher.getStates().size());
         Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
         Assert.assertTrue("should match word 'this'", testWord(matcher, "this"));
         Assert.assertTrue("should match word 'is'", testWord(matcher, "is"));

@@ -72,8 +72,8 @@ public class DFATest extends FSMTestHelper {
             "is"
         ));
         final DFA<State, Character> matcher = originalMatcher.minimize();
-        Assert.assertEquals(6, originalMatcher.getStates().size());
-        Assert.assertEquals(4, matcher.getStates().size());
+        Assert.assertEquals(7, originalMatcher.getStates().size());
+        Assert.assertEquals(5, matcher.getStates().size());
         Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
         Assert.assertTrue("should match word 'this'", testWord(matcher, "this"));
         Assert.assertTrue("should match word 'is'", testWord(matcher, "is"));
@@ -94,8 +94,8 @@ public class DFATest extends FSMTestHelper {
         final DFA<MarkedState<Integer>, Character> matcher = originalMatcher.minimize(
             MarkedState::new, MarkedState::compare, MarkedState::merge
         );
-        Assert.assertEquals(8, originalMatcher.getStates().size());
-        Assert.assertEquals(7, matcher.getStates().size());
+        Assert.assertEquals(9, originalMatcher.getStates().size());
+        Assert.assertEquals(8, matcher.getStates().size());
         Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
         Assert.assertTrue("should match word 'this'", testWord(matcher, "this", 1));
         Assert.assertTrue("should match word 'as'", testWord(matcher, "as", 2));
