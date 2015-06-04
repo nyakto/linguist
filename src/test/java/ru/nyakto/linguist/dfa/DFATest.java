@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import ru.nyakto.linguist.FSM;
+import ru.nyakto.linguist.FSMTestHelper;
 import ru.nyakto.linguist.State;
 import ru.nyakto.linguist.Walker;
 
@@ -14,7 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 
 @RunWith(JUnit4.class)
-public class DFATest {
+public class DFATest extends FSMTestHelper {
     protected DFA<State, Character> createWordsMatcher(Collection<String> words) {
         DFA<State, Character> matcher = DFA.create();
         for (String word : words) {
@@ -34,16 +35,6 @@ public class DFATest {
         }
         matcher.markStateAsFinal(currentState);
         currentState.setMark(mark);
-    }
-
-    protected boolean testWord(DFA<?, Character> matcher, String word) {
-        final Walker<Character> walker = matcher.walker();
-        for (char by : word.toCharArray()) {
-            if (!walker.go(by)) {
-                return false;
-            }
-        }
-        return walker.isInFinalState();
     }
 
     protected <M> boolean testWord(DFA<MarkedState<M>, Character> matcher, String word, M mark) {
