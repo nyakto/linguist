@@ -128,5 +128,7 @@ public class NFATest extends FSMTestHelper {
         Assert.assertTrue("should match word 'test'", testWord(matcher, "test"));
         Assert.assertTrue("should match word 'matcher'", testWord(matcher, "matcher"));
         Assert.assertTrue("should match phrase 'this is test matcher'", testWord(matcher, "this is test matcher"));
+        Assert.assertTrue("should match phrase 'this\tis test matcher'", testWord(matcher, "this\tis test matcher"));
+        Assert.assertTrue("should match phrase 'test   matcher'", testWord(matcher, "test   matcher"));
     }
 }
