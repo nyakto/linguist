@@ -5,8 +5,10 @@ import ru.nyakto.linguist.State;
 import ru.nyakto.linguist.dfa.DFA;
 
 import java.util.*;
-import java.util.function.*;
-import java.util.prefs.PreferenceChangeListener;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     protected final Map<T, Map<Optional<Symbol>, Set<T>>> transitions = new HashMap<>();
@@ -92,7 +94,11 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
             .map(transitions::get)
             .filter(Objects::nonNull)
             .map(Map::keySet)
-            .collect(HashSet::new, Collection::addAll, Collection::addAll);
+            .collect(HashSet<Optional<Symbol>>::new, Collection::addAll, Collection::addAll)
+            .stream()
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toSet());
     }
 
     public <S extends State> DFA<S, Symbol> convertToDFA(
