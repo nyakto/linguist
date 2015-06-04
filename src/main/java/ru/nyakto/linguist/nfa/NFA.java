@@ -2,9 +2,13 @@ package ru.nyakto.linguist.nfa;
 
 import ru.nyakto.linguist.FSM;
 import ru.nyakto.linguist.State;
+import ru.nyakto.linguist.dfa.DFA;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     protected final Map<T, Map<Optional<Symbol>, Set<T>>> transitions = new HashMap<>();
@@ -83,6 +87,61 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
         return fromStates.stream()
             .map(state -> findDirectSymbolReachableStates(state, by))
             .collect(HashSet::new, Collection::addAll, Collection::addAll);
+    }
+
+    protected Set<Symbol> findDirectTransitionSymbols(Set<T> fromStates) {
+        return fromStates.stream()
+            .map(transitions::get)
+            .filter(Objects::nonNull)
+            .map(Map::keySet)
+            .collect(HashSet<Optional<Symbol>>::new, Collection::addAll, Collection::addAll)
+            .stream()
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toSet());
+    }
+
+    public <S extends State> DFA<S, Symbol> convertToDFA(
+        BiFunction<FSM, Long, S> stateConstructor,
+        BiConsumer<Set<T>, S> merge
+    ) {
+        final DFA<S, Symbol> result = new DFA<>(stateConstructor);
+        final Map<Set<T>, S> old2new = new HashMap<>();
+        final Queue<Set<T>> task = new LinkedList<>();
+        final Set<T> initialState = findLambdaReachableStates(
+            Collections.singleton(getInitialState())
+        );
+
+        final BiConsumer<Set<T>, S> initNewState = (oldStates, newState) -> {
+            oldStates.stream()
+                .filter(State::isFinal)
+                .findAny()
+                .ifPresent((finalState) -> result.markStateAsFinal(newState));
+            if (merge != null) {
+                merge.accept(oldStates, newState);
+            }
+        };
+        final Function<Set<T>, S> createNewState = (oldStates) -> {
+            final S newState = result.createState();
+            initNewState.accept(oldStates, newState);
+            task.add(oldStates);
+            return newState;
+        };
+
+        old2new.put(initialState, result.getInitialState());
+        initNewState.accept(initialState, result.getInitialState());
+        task.add(initialState);
+
+        while (!task.isEmpty()) {
+            final Set<T> oldSrcState = task.remove();
+            final S newSrcState = old2new.computeIfAbsent(oldSrcState, createNewState);
+            for (Symbol by : findDirectTransitionSymbols(oldSrcState)) {
+                final Set<T> oldDstState = findDirectSymbolReachableStates(oldSrcState, by);
+                final S newDstState = old2new.computeIfAbsent(oldDstState, createNewState);
+                result.addTransition(newSrcState, by, newDstState);
+            }
+        }
+        return result;
     }
 
     public static <S> NFA<State, S> create() {
