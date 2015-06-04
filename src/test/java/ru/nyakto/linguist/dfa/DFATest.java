@@ -98,13 +98,16 @@ public class DFATest {
     public void markedStatesShouldObstructMinimization() {
         final DFA<MarkedState<Integer>, Character> originalMatcher = new DFA<>(MarkedState::new);
         addMarkedWordToMatcher(originalMatcher, "this", 1);
+        addMarkedWordToMatcher(originalMatcher, "as", 2);
         addMarkedWordToMatcher(originalMatcher, "is", 2);
         final DFA<MarkedState<Integer>, Character> matcher = originalMatcher.minimize(
             MarkedState::new, MarkedState::compare, MarkedState::merge
         );
-        Assert.assertEquals(6, matcher.getStates().size());
+        Assert.assertEquals(8, originalMatcher.getStates().size());
+        Assert.assertEquals(7, matcher.getStates().size());
         Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
         Assert.assertTrue("should match word 'this'", testWord(matcher, "this", 1));
+        Assert.assertTrue("should match word 'as'", testWord(matcher, "as", 2));
         Assert.assertTrue("should match word 'is'", testWord(matcher, "is", 2));
         Assert.assertTrue("shouldn't match word 'random'", !testWord(matcher, "random"));
     }
