@@ -49,11 +49,13 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
         final Map<T, Map<Symbol, T>> reverseTransitions = buildReverseTransitionsMap(reachable);
         final Queue<Set<T>> task = new LinkedList<>();
         final Set<T> processedStates = new HashSet<>();
-        task.add(
-            reachable.stream()
-                .filter(State::isFinal)
-                .collect(Collectors.toSet())
-        );
+        final Set<T> finalStates = reachable.stream()
+            .filter(State::isFinal)
+            .collect(Collectors.toSet());
+        if (finalStates.isEmpty()) {
+            return result;
+        }
+        task.add(finalStates);
         final Map<T, S> old2new = new HashMap<>();
         while (!task.isEmpty()) {
             final Set<T> states = task.remove();
