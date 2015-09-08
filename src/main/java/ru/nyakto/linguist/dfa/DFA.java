@@ -10,7 +10,7 @@ import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
 public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
-    protected final Map<T, Map<Symbol, T>> transitions = new HashMap<>();
+    public final Map<T, Map<Symbol, T>> transitions = new HashMap<>();
 
     public DFA(BiFunction<FSM, Long, T> stateConstructor) {
         super(stateConstructor);
