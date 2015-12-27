@@ -67,22 +67,25 @@ public class DFATest extends FSMTestHelper {
 
     @Test
     public void minimizedMatcherShouldRecognizeSameLanguage() {
-        final DFA<State, Character> originalMatcher = createWordsMatcher(Arrays.asList(
+        final DFA<State, Character> originalMatcher1 = createWordsMatcher(Arrays.asList(
             "this",
-            "is"
+            "is",
+            "isa"
         ));
-        final DFA<State, Character> matcher = originalMatcher.minimize();
-        Assert.assertEquals(7, originalMatcher.getStates().size());
-        Assert.assertEquals(5, matcher.getStates().size());
-        Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
-        Assert.assertTrue("should match word 'this'", testWord(matcher, "this"));
-        Assert.assertTrue("should match word 'is'", testWord(matcher, "is"));
-        Assert.assertTrue("shouldn't match word 'random'", !testWord(matcher, "random"));
-        Assert.assertTrue("shouldn't match word 't'", !testWord(matcher, "t"));
-        Assert.assertTrue("shouldn't match word 'th'", !testWord(matcher, "th"));
-        Assert.assertTrue("shouldn't match word 'thi'", !testWord(matcher, "thi"));
-        Assert.assertTrue("shouldn't match word 'i'", !testWord(matcher, "i"));
-        Assert.assertTrue("shouldn't match word 's'", !testWord(matcher, "s"));
+        final DFA<State, Character> matcher1 = originalMatcher1.minimize();
+        Assert.assertEquals(8, originalMatcher1.getStates().size());
+        Assert.assertEquals(7, matcher1.getStates().size());
+        Assert.assertTrue("shouldn't match empty string", !testWord(matcher1, ""));
+        Assert.assertTrue("should match word 'this'", testWord(matcher1, "this"));
+        Assert.assertTrue("should match word 'is'", testWord(matcher1, "is"));
+        Assert.assertTrue("should match word 'isa'", testWord(matcher1, "isa"));
+        Assert.assertTrue("shouldn't match word 'random'", !testWord(matcher1, "random"));
+        Assert.assertTrue("shouldn't match word 't'", !testWord(matcher1, "t"));
+        Assert.assertTrue("shouldn't match word 'th'", !testWord(matcher1, "th"));
+        Assert.assertTrue("shouldn't match word 'thi'", !testWord(matcher1, "thi"));
+        Assert.assertTrue("shouldn't match word 'i'", !testWord(matcher1, "i"));
+        Assert.assertTrue("shouldn't match word 's'", !testWord(matcher1, "s"));
+        Assert.assertTrue("shouldn't match word 'thisa'", !testWord(matcher1, "thisa"));
     }
 
     @Test
@@ -95,7 +98,7 @@ public class DFATest extends FSMTestHelper {
             MarkedState::new, MarkedState::compare, MarkedState::merge
         );
         Assert.assertEquals(9, originalMatcher.getStates().size());
-        Assert.assertEquals(8, matcher.getStates().size());
+        Assert.assertEquals(7, matcher.getStates().size());
         Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
         Assert.assertTrue("should match word 'this'", testWord(matcher, "this", 1));
         Assert.assertTrue("should match word 'as'", testWord(matcher, "as", 2));

@@ -4,6 +4,7 @@ import ru.nyakto.linguist.FSM;
 import ru.nyakto.linguist.State;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
@@ -47,45 +48,109 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
         final DFA<S, Symbol> result = new DFA<>(stateConstructor);
         final Set<T> reachable = findReachableStates();
         final Map<T, Map<Symbol, T>> reverseTransitions = buildReverseTransitionsMap(reachable);
-        final Queue<Set<T>> task = new LinkedList<>();
-        final Set<T> processedStates = new HashSet<>();
+        final Queue<Integer> task = new LinkedList<>();
         final Set<T> finalStates = reachable.stream()
             .filter(State::isFinal)
             .collect(Collectors.toSet());
         if (finalStates.isEmpty()) {
             return result;
         }
-        task.add(finalStates);
-        final Map<T, S> old2new = new HashMap<>();
-        while (!task.isEmpty()) {
-            final Set<T> states = task.remove();
-            processedStates.addAll(states);
-            for (Set<T> equalStates : splitByEquality(states, reverseTransitions, compare)) {
-                final S newState = equalStates.contains(getInitialState())
-                    ? result.getInitialState()
-                    : result.createState();
-                if (equalStates.iterator().next().isFinal()) {
-                    result.markStateAsFinal(newState);
+        task.add(1);
+        final AtomicInteger classCounter = new AtomicInteger(2);
+        final Map<T, Integer> stateClass = new HashMap<>();
+        final Map<Integer, Set<T>> statesByClass = new HashMap<>();
+        final Set<T> commonStates = reachable.stream()
+            .filter(state -> !isFinal(state))
+            .collect(Collectors.toSet());
+        statesByClass.put(0, commonStates);
+        statesByClass.put(1, new HashSet<>(finalStates));
+        commonStates.forEach((state) -> stateClass.put(state, 0));
+        finalStates.forEach((state) -> stateClass.put(state, 1));
+        if (compare != null) {
+            final List<Set<T>> introduceClasses = new LinkedList<>();
+            statesByClass.forEach((classId, states) -> {
+                boolean equal = true;
+                if (states.size() > 1) {
+                    final Iterator<T> iterator = states.iterator();
+                    final T state = iterator.next();
+                    while (iterator.hasNext()) {
+                        if (!compare.test(state, iterator.next())) {
+                            equal = false;
+                        }
+                    }
                 }
-                if (merge != null) {
-                    merge.accept(equalStates, newState);
+                if (!equal) {
+                    final List<Set<T>> newClasses = new LinkedList<>();
+                    final Iterator<T> iterator = states.iterator();
+                    final T original = iterator.next();
+                    while (iterator.hasNext()) {
+                        final T state = iterator.next();
+                        if (compare.test(original, state)) {
+                            continue;
+                        }
+                        iterator.remove();
+                        newClasses.stream()
+                            .filter(classStates -> compare.test(classStates.iterator().next(), state))
+                            .findFirst()
+                            .orElseGet(() -> {
+                                final Set<T> newClass = new HashSet<>();
+                                newClasses.add(newClass);
+                                return newClass;
+                            })
+                            .add(state);
+                    }
+                    introduceClasses.addAll(newClasses);
                 }
-                equalStates.forEach(oldState -> old2new.put(oldState, newState));
-                final Set<T> unhandledSourceStates = equalStates.stream()
-                    .map(
-                        state -> Optional.ofNullable(reverseTransitions.get(state))
-                            .map(Map::values)
-                            .orElseGet(Collections::emptySet)
-                    )
-                    .collect(HashSet<T>::new, Collection::addAll, Collection::addAll)
-                    .stream()
-                    .filter(state -> !processedStates.contains(state))
-                    .collect(Collectors.toSet());
-                if (!unhandledSourceStates.isEmpty()) {
-                    task.add(unhandledSourceStates);
-                }
+            });
+            for (Set<T> states : introduceClasses) {
+                final int newClassId = classCounter.getAndIncrement();
+                statesByClass.put(newClassId, states);
+                task.add(newClassId);
             }
         }
+        while (!task.isEmpty()) {
+            final int currentClass = task.remove();
+            final Set<T> states = statesByClass.get(currentClass);
+            final Map<T, Set<Symbol>> incomingTransitions = new HashMap<>();
+            final Map<Set<Symbol>, Set<T>> incomingStateClasses = new HashMap<>();
+            states.forEach(state -> {
+                Optional.ofNullable(reverseTransitions.get(state)).ifPresent(transitions -> {
+                    transitions.forEach((by, from) -> {
+                        incomingTransitions.computeIfAbsent(from, (symbol) -> new HashSet<>()).add(by);
+                    });
+                });
+            });
+            incomingTransitions.forEach((from, by) -> {
+                incomingStateClasses.computeIfAbsent(by, symbols -> new HashSet<>()).add(from);
+            });
+            incomingStateClasses.values().forEach(possiblyEqualStates -> possiblyEqualStates.stream()
+                .collect(Collectors.groupingBy(stateClass::get, Collectors.toSet()))
+                .forEach((oldClassId, equalStates) -> {
+                    final Set<T> oldClassStates = statesByClass.get(oldClassId);
+                    if (!oldClassStates.equals(equalStates)) {
+                        int newClassId = classCounter.getAndIncrement();
+                        statesByClass.put(newClassId, equalStates);
+                        oldClassStates.removeAll(equalStates);
+                        equalStates.forEach(state -> stateClass.put(state, newClassId));
+                        task.add(newClassId);
+                        if (!task.contains(oldClassId)) {
+                            task.add(oldClassId);
+                        }
+                    }
+                }));
+        }
+        final Map<T, S> old2new = new HashMap<>();
+        statesByClass.values().forEach((states) -> {
+            if (!states.isEmpty()) {
+                final boolean isInitial = states.contains(getInitialState());
+                final S newState = isInitial ? result.getInitialState() : result.createState();
+                Optional.ofNullable(merge).ifPresent(fn -> fn.accept(states, newState));
+                if (isFinal(states.iterator().next())) {
+                    result.markStateAsFinal(newState);
+                }
+                states.forEach(state -> old2new.put(state, newState));
+            }
+        });
         old2new.forEach((oldState, newState) -> Optional.ofNullable(transitions.get(oldState))
             .ifPresent(transitions -> transitions.forEach((by, to) -> {
                 Optional.ofNullable(old2new.get(to)).ifPresent(newTargetState -> {
@@ -119,47 +184,6 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
                 result.computeIfAbsent(dst, (key) -> new HashMap<>()).put(by, src);
             }
         }));
-        return result;
-    }
-
-    protected Collection<? extends Set<T>> splitByEquality(
-        Set<T> states,
-        Map<T, Map<Symbol, T>> reverseTransitions,
-        BiPredicate<T, T> compare
-    ) {
-        if (states.size() <= 1) {
-            return Collections.singletonList(states);
-        }
-        final Map<Set<Symbol>, Set<T>> equalityClasses = states.stream()
-            .collect(Collectors.groupingBy(
-                (state) -> Optional.ofNullable(reverseTransitions.get(state))
-                    .map(Map::keySet)
-                    .orElseGet(Collections::emptySet),
-                Collectors.toSet()
-            ));
-        if (compare == null) {
-            return equalityClasses.values().stream()
-                .map((equalStates) -> (Set<T>) new HashSet<>(equalStates))
-                .collect(Collectors.toList());
-        }
-        final Collection<Set<T>> result = new LinkedList<>();
-        for (Set<T> equalStates : equalityClasses.values()) {
-            while (!equalStates.isEmpty()) {
-                final Iterator<T> iterator = equalStates.iterator();
-                final T state = iterator.next();
-                iterator.remove();
-                final Set<T> newClass = new HashSet<>();
-                newClass.add(state);
-                while (iterator.hasNext()) {
-                    final T testState = iterator.next();
-                    if (compare.test(state, testState)) {
-                        newClass.add(testState);
-                        iterator.remove();
-                    }
-                }
-                result.add(newClass);
-            }
-        }
         return result;
     }
 
