@@ -4,10 +4,12 @@ import ru.nyakto.linguist.FSM;
 import ru.nyakto.linguist.State;
 import ru.nyakto.linguist.nfa.NFA;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
     public final Map<T, Map<Symbol, T>> transitions = new HashMap<>();
@@ -49,33 +51,6 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
         final DFA<T, Symbol> det1 = rev1.convertToDFA(getStateConstructor(), merge);
         final NFA<T, Symbol> rev2 = new NFA<>(det1, copy).reverse();
         return rev2.convertToDFA(getStateConstructor(), merge);
-    }
-
-    protected Set<T> findReachableStates() {
-        final Set<T> reachable = new HashSet<>();
-        final Queue<T> task = new LinkedList<>();
-        reachable.add(getInitialState());
-        task.add(getInitialState());
-        while (!task.isEmpty()) {
-            final T state = task.remove();
-            Optional.ofNullable(transitions.get(state))
-                .ifPresent(transitions -> task.addAll(
-                    transitions.values().stream()
-                        .filter(reachable::add)
-                        .collect(Collectors.toList())
-                ));
-        }
-        return reachable;
-    }
-
-    protected Map<T, Map<Symbol, T>> buildReverseTransitionsMap(Set<T> states) {
-        final Map<T, Map<Symbol, T>> result = new HashMap<>();
-        transitions.forEach((src, srcTransitions) -> srcTransitions.forEach((by, dst) -> {
-            if (states.contains(dst)) {
-                result.computeIfAbsent(dst, (key) -> new HashMap<>()).put(by, src);
-            }
-        }));
-        return result;
     }
 
     public static <S> DFA<State, S> create() {
