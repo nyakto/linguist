@@ -20,11 +20,6 @@ public class State {
         return fsm.isFinal(this);
     }
 
-    public State copy(FSM fsm) {
-        Objects.requireNonNull(fsm);
-        return new State(fsm, id);
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

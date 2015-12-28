@@ -8,12 +8,18 @@ import java.util.function.BiFunction;
 abstract public class FSM<T extends State, Symbol> implements Cloneable {
     private final T initialState;
     private final Set<Long> finalStateIds = new HashSet<>();
+    protected final BiFunction<FSM, Long, T> stateConstructor;
     protected final StateFactory<T> stateFactory;
     protected final Set<T> states = new HashSet<>();
 
     public FSM(BiFunction<FSM, Long, T> stateConstructor) {
+        this.stateConstructor = stateConstructor;
         stateFactory = new BasicStateFactory<>(this, stateConstructor);
         initialState = createState();
+    }
+
+    public BiFunction<FSM, Long, T> getStateConstructor() {
+        return stateConstructor;
     }
 
     public final T getInitialState() {

@@ -17,6 +17,13 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
         super(stateConstructor);
     }
 
+    public NFA(DFA<T, Symbol> dfa, BiConsumer<T, T> copyState) {
+        super(dfa.getStateConstructor());
+        final T finalState = createState();
+        markStateAsFinal(finalState);
+        addTransition(getInitialState(), dfa, copyState, finalState);
+    }
+
     @Override
     public NFAWalker<T, Symbol> walker(T state) {
         return new NFAWalker<>(
@@ -120,6 +127,31 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
         final T to = createState();
         addTransition(from, by, copy, to);
         return to;
+    }
+
+    public NFA<T, Symbol> reverse() {
+        final NFA<T, Symbol> result = new NFA<>(stateConstructor);
+        final Map<T, T> stateMap = new HashMap<>();
+        final T finalState = result.createState();
+        result.markStateAsFinal(finalState);
+        for (T src : states) {
+            final T dst = result.createState();
+            stateMap.put(src, dst);
+            if (src.isFinal()) {
+                result.addTransition(result.getInitialState(), dst);
+            }
+        }
+        result.addTransition(stateMap.get(getInitialState()), finalState);
+        transitions.forEach((from, map) -> {
+            map.forEach((by, targets) -> {
+                for (T target : targets) {
+                    final T src = stateMap.get(target);
+                    final T dst = stateMap.get(from);
+                    result.addTransition(src, by, dst);
+                }
+            });
+        });
+        return result;
     }
 
     protected Set<T> findDirectLambdaReachableStates(T from) {
