@@ -141,31 +141,6 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
         return to;
     }
 
-    public NFA<T, Symbol> reverse() {
-        final NFA<T, Symbol> result = new NFA<>(getStateFactory().cloneFactory());
-        final Map<Integer, T> stateMap = new HashMap<>();
-        final T finalState = result.createState();
-        result.markStateAsFinal(finalState);
-        for (T src : getStates()) {
-            final T dst = result.createState();
-            stateMap.put(src.getId(), dst);
-            if (isFinal(src)) {
-                result.addTransition(result.getInitialState(), dst);
-            }
-        }
-        result.addTransition(stateMap.get(getInitialState().getId()), finalState);
-        transitions.forEach((from, map) -> {
-            map.forEach((by, targets) -> {
-                for (int target : targets) {
-                    final T src = stateMap.get(target);
-                    final T dst = stateMap.get(from);
-                    result.addTransition(src, by, dst);
-                }
-            });
-        });
-        return result;
-    }
-
     protected Set<Integer> findDirectLambdaReachableStates(int from) {
         final Set<Integer> result = new HashSet<>(
             Optional.ofNullable(transitions.get(from))

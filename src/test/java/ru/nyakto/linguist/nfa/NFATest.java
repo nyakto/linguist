@@ -74,14 +74,14 @@ public class NFATest extends FSMTestHelper {
         addWordToMatcher(matcher, "is");
         addWordToMatcher(matcher, "test");
         addWordToMatcher(matcher, "matcher");
-        Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
         Assert.assertTrue("should match word 'this'", testWord(matcher, "this"));
         Assert.assertTrue("should match word 'is'", testWord(matcher, "is"));
         Assert.assertTrue("should match word 'test'", testWord(matcher, "test"));
         Assert.assertTrue("should match word 'matcher'", testWord(matcher, "matcher"));
-        Assert.assertTrue("shouldn't match word 'tes'", !testWord(matcher, "tes"));
-        Assert.assertTrue("shouldn't match word 'tcher'", !testWord(matcher, "tcher"));
-        Assert.assertTrue("shouldn't match word 'random'", !testWord(matcher, "random"));
+        Assert.assertFalse("shouldn't match empty string", testWord(matcher, ""));
+        Assert.assertFalse("shouldn't match word 'tes'", testWord(matcher, "tes"));
+        Assert.assertFalse("shouldn't match word 'tcher'", testWord(matcher, "tcher"));
+        Assert.assertFalse("shouldn't match word 'random'", testWord(matcher, "random"));
     }
 
     @Test
@@ -94,14 +94,14 @@ public class NFATest extends FSMTestHelper {
         final DFA<State, Character> matcher = originalMatcher.convertToDFA(BasicState::new, null);
         Assert.assertEquals(22, originalMatcher.getStates().size());
         Assert.assertEquals(17, matcher.getStates().size());
-        Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
         Assert.assertTrue("should match word 'this'", testWord(matcher, "this"));
         Assert.assertTrue("should match word 'is'", testWord(matcher, "is"));
         Assert.assertTrue("should match word 'test'", testWord(matcher, "test"));
         Assert.assertTrue("should match word 'matcher'", testWord(matcher, "matcher"));
-        Assert.assertTrue("shouldn't match word 'tes'", !testWord(matcher, "tes"));
-        Assert.assertTrue("shouldn't match word 'tcher'", !testWord(matcher, "tcher"));
-        Assert.assertTrue("shouldn't match word 'random'", !testWord(matcher, "random"));
+        Assert.assertFalse("shouldn't match empty string", testWord(matcher, ""));
+        Assert.assertFalse("shouldn't match word 'tes'", testWord(matcher, "tes"));
+        Assert.assertFalse("shouldn't match word 'tcher'", testWord(matcher, "tcher"));
+        Assert.assertFalse("shouldn't match word 'random'", testWord(matcher, "random"));
     }
 
     @Test
@@ -123,7 +123,6 @@ public class NFATest extends FSMTestHelper {
                 0
             )
         );
-        Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));
         Assert.assertTrue("should match word 'this'", testWord(matcher, "this"));
         Assert.assertTrue("should match word 'is'", testWord(matcher, "is"));
         Assert.assertTrue("should match word 'test'", testWord(matcher, "test"));
@@ -131,5 +130,6 @@ public class NFATest extends FSMTestHelper {
         Assert.assertTrue("should match phrase 'this is test matcher'", testWord(matcher, "this is test matcher"));
         Assert.assertTrue("should match phrase 'this\tis test matcher'", testWord(matcher, "this\tis test matcher"));
         Assert.assertTrue("should match phrase 'test   matcher'", testWord(matcher, "test   matcher"));
+        Assert.assertFalse("shouldn't match empty string", testWord(matcher, ""));
     }
 }
