@@ -53,4 +53,8 @@ abstract public class FSM<T extends State, Symbol> implements Cloneable {
     abstract public Walker<Symbol> walker(T state);
 
     abstract public void addTransition(T from, Symbol by, T to);
+
+    public T getStateById(int stateId) {
+        return states.get(stateId);
+    }
 }

@@ -12,7 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
-    protected final Map<T, Map<Optional<Symbol>, Set<T>>> transitions = new HashMap<>();
+    protected final Map<Integer, Map<Optional<Symbol>, Set<Integer>>> transitions = new HashMap<>();
 
     public NFA(StateFactory<T> stateFactory) {
         super(stateFactory);
@@ -47,9 +47,11 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     }
 
     public void addTransition(T from, Optional<Symbol> by, T to) {
-        transitions.computeIfAbsent(from, (src) -> new HashMap<>())
-            .computeIfAbsent(by, (symbol) -> new HashSet<>())
-            .add(to);
+        transitions.computeIfAbsent(
+            from.getId(), (key) -> new HashMap<>()
+        ).computeIfAbsent(
+            by, (key) -> new HashSet<>()
+        ).add(to.getId());
     }
 
     public void addTransition(T from, NFA<T, Symbol> by, BiConsumer<T, T> copy, T to) {
@@ -64,20 +66,23 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
             return newState;
         };
 
-        final Map<T, T> old2new = by.getStates().stream()
-            .collect(Collectors.toMap(old -> old, copyState));
-        addTransition(from, old2new.get(by.getInitialState()));
+        final Map<Integer, T> old2new = by.getStates().stream()
+            .collect(Collectors.toMap(State::getId, copyState));
+        addTransition(from, old2new.get(by.getInitialState().getId()));
         old2new.forEach((oldState, newState) -> Optional.ofNullable(by.transitions.get(oldState))
             .filter(transitions -> !transitions.isEmpty())
             .ifPresent(oldTransitions -> {
-                final Map<Optional<Symbol>, Set<T>> newStateTransitions = transitions.computeIfAbsent(
-                    newState,
-                    key -> new HashMap<>()
+                final Map<Optional<Symbol>, Set<Integer>> newStateTransitions = transitions.computeIfAbsent(
+                    newState.getId(),
+                    (key) -> new HashMap<>()
                 );
                 oldTransitions.forEach((symbol, target) -> {
-                    newStateTransitions.computeIfAbsent(symbol, key -> new HashSet<>()).addAll(
+                    newStateTransitions.computeIfAbsent(
+                        symbol, (key) -> new HashSet<>()
+                    ).addAll(
                         target.stream()
                             .map(old2new::get)
+                            .map(State::getId)
                             .collect(Collectors.toSet())
                     );
                 });
@@ -96,19 +101,21 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
             return newState;
         };
 
-        final Map<T, T> old2new = by.getStates().stream()
-            .collect(Collectors.toMap(old -> old, copyState));
-        addTransition(from, old2new.get(by.getInitialState()));
+        final Map<Integer, T> old2new = by.getStates().stream()
+            .collect(Collectors.toMap(State::getId, copyState));
+        addTransition(from, old2new.get(by.getInitialState().getId()));
         old2new.forEach((oldState, newState) -> Optional.ofNullable(by.transitions.get(oldState))
             .filter(transitions -> !transitions.isEmpty())
             .ifPresent(oldTransitions -> {
-                final Map<Optional<Symbol>, Set<T>> newStateTransitions = transitions.computeIfAbsent(
-                    newState,
-                    key -> new HashMap<>()
+                final Map<Optional<Symbol>, Set<Integer>> newStateTransitions = transitions.computeIfAbsent(
+                    newState.getId(),
+                    (key) -> new HashMap<>()
                 );
                 oldTransitions.forEach((symbol, target) -> {
-                    newStateTransitions.computeIfAbsent(Optional.of(symbol), key -> new HashSet<>()).add(
-                        old2new.get(target)
+                    newStateTransitions.computeIfAbsent(
+                        Optional.of(symbol), (key) -> new HashSet<>()
+                    ).add(
+                        old2new.get(target).getId()
                     );
                 });
             }));
@@ -136,20 +143,20 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
 
     public NFA<T, Symbol> reverse() {
         final NFA<T, Symbol> result = new NFA<>(getStateFactory().cloneFactory());
-        final Map<T, T> stateMap = new HashMap<>();
+        final Map<Integer, T> stateMap = new HashMap<>();
         final T finalState = result.createState();
         result.markStateAsFinal(finalState);
         for (T src : getStates()) {
             final T dst = result.createState();
-            stateMap.put(src, dst);
+            stateMap.put(src.getId(), dst);
             if (isFinal(src)) {
                 result.addTransition(result.getInitialState(), dst);
             }
         }
-        result.addTransition(stateMap.get(getInitialState()), finalState);
+        result.addTransition(stateMap.get(getInitialState().getId()), finalState);
         transitions.forEach((from, map) -> {
             map.forEach((by, targets) -> {
-                for (T target : targets) {
+                for (int target : targets) {
                     final T src = stateMap.get(target);
                     final T dst = stateMap.get(from);
                     result.addTransition(src, by, dst);
@@ -159,8 +166,8 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
         return result;
     }
 
-    protected Set<T> findDirectLambdaReachableStates(T from) {
-        final Set<T> result = new HashSet<>(
+    protected Set<Integer> findDirectLambdaReachableStates(int from) {
+        final Set<Integer> result = new HashSet<>(
             Optional.ofNullable(transitions.get(from))
                 .map(transitions -> transitions.get(Optional.<Symbol>empty()))
                 .orElseGet(Collections::emptySet)
@@ -169,9 +176,9 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
         return result;
     }
 
-    protected Set<T> findLambdaReachableStates(Set<T> fromStates) {
-        final Set<T> result = new HashSet<>();
-        final Queue<T> task = new LinkedList<>();
+    protected Set<Integer> findLambdaReachableStates(Set<Integer> fromStates) {
+        final Set<Integer> result = new HashSet<>();
+        final Queue<Integer> task = new LinkedList<>();
         result.addAll(fromStates);
         task.addAll(fromStates);
         while (!task.isEmpty()) {
@@ -182,19 +189,19 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
         return result;
     }
 
-    protected Set<T> findDirectSymbolReachableStates(T from, Symbol by) {
+    protected Set<Integer> findDirectSymbolReachableStates(int from, Symbol by) {
         return Optional.ofNullable(transitions.get(from))
             .map(transitions -> transitions.get(Optional.of(by)))
             .orElseGet(Collections::emptySet);
     }
 
-    protected Set<T> findDirectSymbolReachableStates(Set<T> fromStates, Symbol by) {
+    protected Set<Integer> findDirectSymbolReachableStates(Set<Integer> fromStates, Symbol by) {
         return fromStates.stream()
             .map(state -> findDirectSymbolReachableStates(state, by))
             .collect(HashSet::new, Collection::addAll, Collection::addAll);
     }
 
-    protected Set<Symbol> findDirectTransitionSymbols(Set<T> fromStates) {
+    protected Set<Symbol> findDirectTransitionSymbols(Set<Integer> fromStates) {
         return fromStates.stream()
             .map(transitions::get)
             .filter(Objects::nonNull)
@@ -208,7 +215,7 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
 
     public <S extends State> DFA<S, Symbol> convertToDFA(
         StateFactory<S> stateFactory,
-        BiConsumer<Set<T>, S> merge
+        BiConsumer<Collection<T>, S> merge
     ) {
         final DFA<S, Symbol> result = new DFA<>(stateFactory.cloneFactory());
         convertToDFA(result, merge);
@@ -217,7 +224,7 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
 
     public <S extends State> DFA<S, Symbol> convertToDFA(
         Function<Integer, S> stateConstructor,
-        BiConsumer<Set<T>, S> merge
+        BiConsumer<Collection<T>, S> merge
     ) {
         final DFA<S, Symbol> result = new DFA<>(stateConstructor);
         convertToDFA(result, merge);
@@ -226,15 +233,18 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
 
     private <S extends State> void convertToDFA(
         DFA<S, Symbol> target,
-        BiConsumer<Set<T>, S> merge
+        BiConsumer<Collection<T>, S> merge
     ) {
-        final Map<Set<T>, S> old2new = new HashMap<>();
-        final Queue<Set<T>> task = new LinkedList<>();
-        final Set<T> initialState = findLambdaReachableStates(
-            Collections.singleton(getInitialState())
+        final Map<Set<Integer>, S> old2new = new HashMap<>();
+        final Queue<Set<Integer>> task = new LinkedList<>();
+        final Set<Integer> initialState = findLambdaReachableStates(
+            Collections.singleton(getInitialState().getId())
         );
 
-        final BiConsumer<Set<T>, S> initNewState = (oldStates, newState) -> {
+        final BiConsumer<Set<Integer>, S> initNewState = (oldStateIds, newState) -> {
+            final List<T> oldStates = oldStateIds.stream()
+                .map(this::getStateById)
+                .collect(Collectors.toList());
             oldStates.stream()
                 .filter(this::isFinal)
                 .findAny()
@@ -243,10 +253,10 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
                 merge.accept(oldStates, newState);
             }
         };
-        final Function<Set<T>, S> createNewState = (oldStates) -> {
+        final Function<Set<Integer>, S> createNewState = (oldStateIds) -> {
             final S newState = target.createState();
-            initNewState.accept(oldStates, newState);
-            task.add(oldStates);
+            initNewState.accept(oldStateIds, newState);
+            task.add(oldStateIds);
             return newState;
         };
 
@@ -255,10 +265,10 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
         task.add(initialState);
 
         while (!task.isEmpty()) {
-            final Set<T> oldSrcState = task.remove();
+            final Set<Integer> oldSrcState = task.remove();
             final S newSrcState = old2new.computeIfAbsent(oldSrcState, createNewState);
             for (Symbol by : findDirectTransitionSymbols(oldSrcState)) {
-                final Set<T> oldDstState = findLambdaReachableStates(
+                final Set<Integer> oldDstState = findLambdaReachableStates(
                     findDirectSymbolReachableStates(oldSrcState, by)
                 );
                 final S newDstState = old2new.computeIfAbsent(oldDstState, createNewState);
