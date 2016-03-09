@@ -1,5 +1,6 @@
 package ru.nyakto.linguist.nfa;
 
+import ru.nyakto.linguist.BasicState;
 import ru.nyakto.linguist.FSM;
 import ru.nyakto.linguist.State;
 import ru.nyakto.linguist.dfa.DFA;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     protected final Map<T, Map<Optional<Symbol>, Set<T>>> transitions = new HashMap<>();
 
-    public NFA(BiFunction<FSM, Long, T> stateConstructor) {
+    public NFA(BiFunction<FSM, Integer, T> stateConstructor) {
         super(stateConstructor);
     }
 
@@ -202,7 +203,7 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     }
 
     public <S extends State> DFA<S, Symbol> convertToDFA(
-        BiFunction<FSM, Long, S> stateConstructor,
+        BiFunction<FSM, Integer, S> stateConstructor,
         BiConsumer<Set<T>, S> merge
     ) {
         final DFA<S, Symbol> result = new DFA<>(stateConstructor);
@@ -247,6 +248,6 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     }
 
     public static <S> NFA<State, S> create() {
-        return new NFA<>(State::new);
+        return new NFA<>(BasicState::new);
     }
 }

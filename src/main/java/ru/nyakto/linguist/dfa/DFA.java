@@ -1,5 +1,6 @@
 package ru.nyakto.linguist.dfa;
 
+import ru.nyakto.linguist.BasicState;
 import ru.nyakto.linguist.FSM;
 import ru.nyakto.linguist.State;
 import ru.nyakto.linguist.nfa.NFA;
@@ -14,7 +15,7 @@ import java.util.function.BiFunction;
 public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
     public final Map<T, Map<Symbol, T>> transitions = new HashMap<>();
 
-    public DFA(BiFunction<FSM, Long, T> stateConstructor) {
+    public DFA(BiFunction<FSM, Integer, T> stateConstructor) {
         super(stateConstructor);
     }
 
@@ -54,6 +55,6 @@ public class DFA<T extends State, Symbol> extends FSM<T, Symbol> {
     }
 
     public static <S> DFA<State, S> create() {
-        return new DFA<>(State::new);
+        return new DFA<>(BasicState::new);
     }
 }
