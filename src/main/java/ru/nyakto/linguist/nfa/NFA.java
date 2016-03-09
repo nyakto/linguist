@@ -3,23 +3,27 @@ package ru.nyakto.linguist.nfa;
 import ru.nyakto.linguist.BasicState;
 import ru.nyakto.linguist.FSM;
 import ru.nyakto.linguist.State;
+import ru.nyakto.linguist.StateFactory;
 import ru.nyakto.linguist.dfa.DFA;
 
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     protected final Map<T, Map<Optional<Symbol>, Set<T>>> transitions = new HashMap<>();
 
-    public NFA(BiFunction<FSM, Integer, T> stateConstructor) {
+    public NFA(StateFactory<T> stateFactory) {
+        super(stateFactory);
+    }
+
+    public NFA(Function<Integer, T> stateConstructor) {
         super(stateConstructor);
     }
 
     public NFA(DFA<T, Symbol> dfa, BiConsumer<T, T> copyState) {
-        super(dfa.getStateConstructor());
+        super(dfa.getStateFactory().cloneFactory());
         final T finalState = createState();
         markStateAsFinal(finalState);
         addTransition(getInitialState(), dfa, copyState, finalState);
@@ -51,7 +55,7 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     public void addTransition(T from, NFA<T, Symbol> by, BiConsumer<T, T> copy, T to) {
         final Function<T, T> copyState = (oldState) -> {
             final T newState = createState();
-            if (oldState.isFinal()) {
+            if (by.isFinal(oldState)) {
                 addTransition(newState, to);
             }
             if (copy != null) {
@@ -83,7 +87,7 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     public void addTransition(T from, DFA<T, Symbol> by, BiConsumer<T, T> copy, T to) {
         final Function<T, T> copyState = (oldState) -> {
             final T newState = createState();
-            if (oldState.isFinal()) {
+            if (by.isFinal(oldState)) {
                 addTransition(newState, to);
             }
             if (copy != null) {
@@ -131,14 +135,14 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     }
 
     public NFA<T, Symbol> reverse() {
-        final NFA<T, Symbol> result = new NFA<>(stateConstructor);
+        final NFA<T, Symbol> result = new NFA<>(getStateFactory().cloneFactory());
         final Map<T, T> stateMap = new HashMap<>();
         final T finalState = result.createState();
         result.markStateAsFinal(finalState);
-        for (T src : states) {
+        for (T src : getStates()) {
             final T dst = result.createState();
             stateMap.put(src, dst);
-            if (src.isFinal()) {
+            if (isFinal(src)) {
                 result.addTransition(result.getInitialState(), dst);
             }
         }
@@ -203,10 +207,27 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
     }
 
     public <S extends State> DFA<S, Symbol> convertToDFA(
-        BiFunction<FSM, Integer, S> stateConstructor,
+        StateFactory<S> stateFactory,
+        BiConsumer<Set<T>, S> merge
+    ) {
+        final DFA<S, Symbol> result = new DFA<>(stateFactory.cloneFactory());
+        convertToDFA(result, merge);
+        return result;
+    }
+
+    public <S extends State> DFA<S, Symbol> convertToDFA(
+        Function<Integer, S> stateConstructor,
         BiConsumer<Set<T>, S> merge
     ) {
         final DFA<S, Symbol> result = new DFA<>(stateConstructor);
+        convertToDFA(result, merge);
+        return result;
+    }
+
+    private <S extends State> void convertToDFA(
+        DFA<S, Symbol> target,
+        BiConsumer<Set<T>, S> merge
+    ) {
         final Map<Set<T>, S> old2new = new HashMap<>();
         final Queue<Set<T>> task = new LinkedList<>();
         final Set<T> initialState = findLambdaReachableStates(
@@ -215,22 +236,22 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
 
         final BiConsumer<Set<T>, S> initNewState = (oldStates, newState) -> {
             oldStates.stream()
-                .filter(State::isFinal)
+                .filter(this::isFinal)
                 .findAny()
-                .ifPresent((finalState) -> result.markStateAsFinal(newState));
+                .ifPresent((finalState) -> target.markStateAsFinal(newState));
             if (merge != null) {
                 merge.accept(oldStates, newState);
             }
         };
         final Function<Set<T>, S> createNewState = (oldStates) -> {
-            final S newState = result.createState();
+            final S newState = target.createState();
             initNewState.accept(oldStates, newState);
             task.add(oldStates);
             return newState;
         };
 
-        old2new.put(initialState, result.getInitialState());
-        initNewState.accept(initialState, result.getInitialState());
+        old2new.put(initialState, target.getInitialState());
+        initNewState.accept(initialState, target.getInitialState());
         task.add(initialState);
 
         while (!task.isEmpty()) {
@@ -241,10 +262,9 @@ public class NFA<T extends State, Symbol> extends FSM<T, Symbol> {
                     findDirectSymbolReachableStates(oldSrcState, by)
                 );
                 final S newDstState = old2new.computeIfAbsent(oldDstState, createNewState);
-                result.addTransition(newSrcState, by, newDstState);
+                target.addTransition(newSrcState, by, newDstState);
             }
         }
-        return result;
     }
 
     public static <S> NFA<State, S> create() {

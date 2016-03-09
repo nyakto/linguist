@@ -1,23 +1,15 @@
 package ru.nyakto.linguist;
 
-import java.util.Objects;
-
 public class BasicState implements State {
-    private final FSM fsm;
     private final int id;
 
-    public BasicState(FSM fsm, int id) {
-        Objects.requireNonNull(fsm);
-        this.fsm = fsm;
+    public BasicState(int id) {
         this.id = id;
     }
 
+    @Override
     public final int getId() {
         return id;
-    }
-
-    public final boolean isFinal() {
-        return fsm.isFinal(this);
     }
 
     @Override

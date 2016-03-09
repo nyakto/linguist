@@ -30,7 +30,7 @@ public class DFAWalker<T extends State, Symbol> implements Walker<Symbol> {
 
     @Override
     public boolean isInFinalState() {
-        return currentState.isFinal();
+        return dfa.isFinal(currentState);
     }
 
     public T getCurrentState() {

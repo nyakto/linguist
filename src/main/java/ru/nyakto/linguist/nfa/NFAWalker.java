@@ -37,7 +37,7 @@ public class NFAWalker<T extends State, Symbol> implements Walker<Symbol> {
     @Override
     public boolean isInFinalState() {
         return currentState.stream()
-            .filter(State::isFinal)
+            .filter(nfa::isFinal)
             .findAny()
             .isPresent();
     }

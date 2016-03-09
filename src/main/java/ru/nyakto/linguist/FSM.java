@@ -1,33 +1,35 @@
 package ru.nyakto.linguist;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 abstract public class FSM<T extends State, Symbol> implements Cloneable {
     private final T initialState;
     private final Set<Integer> finalStateIds = new HashSet<>();
-    protected final BiFunction<FSM, Integer, T> stateConstructor;
-    protected final StateFactory<T> stateFactory;
-    protected final Set<T> states = new HashSet<>();
+    private final StateFactory<T> stateFactory;
+    private final Map<Integer, T> states = new HashMap<>();
 
-    public FSM(BiFunction<FSM, Integer, T> stateConstructor) {
-        this.stateConstructor = stateConstructor;
-        stateFactory = new BasicStateFactory<>(this, stateConstructor);
+    public FSM(StateFactory<T> stateFactory) {
+        this.stateFactory = stateFactory;
         initialState = createState();
     }
 
-    public BiFunction<FSM, Integer, T> getStateConstructor() {
-        return stateConstructor;
+    public FSM(Function<Integer, T> stateConstructor) {
+        this.stateFactory = new BasicStateFactory<>(stateConstructor);
+        initialState = createState();
+    }
+
+    public StateFactory<T> getStateFactory() {
+        return stateFactory;
     }
 
     public final T getInitialState() {
         return initialState;
     }
 
-    public final Set<T> getStates() {
-        return Collections.unmodifiableSet(states);
+    public final Collection<T> getStates() {
+        return Collections.unmodifiableCollection(states.values());
     }
 
     public final void markStateAsFinal(State state) {
@@ -40,7 +42,7 @@ abstract public class FSM<T extends State, Symbol> implements Cloneable {
 
     public final T createState() {
         final T newState = stateFactory.createState();
-        states.add(newState);
+        states.put(newState.getId(), newState);
         return newState;
     }
 
