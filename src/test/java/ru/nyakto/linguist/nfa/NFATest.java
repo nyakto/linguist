@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import ru.nyakto.linguist.BasicState;
 import ru.nyakto.linguist.FSMTestHelper;
 import ru.nyakto.linguist.State;
 import ru.nyakto.linguist.dfa.DFA;
@@ -90,7 +91,7 @@ public class NFATest extends FSMTestHelper {
         addWordToMatcher(originalMatcher, "is");
         addWordToMatcher(originalMatcher, "test");
         addWordToMatcher(originalMatcher, "matcher");
-        final DFA<State, Character> matcher = originalMatcher.convertToDFA(State::new, null);
+        final DFA<State, Character> matcher = originalMatcher.convertToDFA(BasicState::new, null);
         Assert.assertEquals(22, originalMatcher.getStates().size());
         Assert.assertEquals(17, matcher.getStates().size());
         Assert.assertTrue("shouldn't match empty string", !testWord(matcher, ""));

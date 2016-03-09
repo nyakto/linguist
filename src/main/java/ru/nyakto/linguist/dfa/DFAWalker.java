@@ -16,21 +16,21 @@ public class DFAWalker<T extends State, Symbol> implements Walker<Symbol> {
 
     @Override
     public boolean go(Symbol by) {
-        final Map<Symbol, T> transitions = dfa.transitions.get(currentState);
+        final Map<Symbol, Integer> transitions = dfa.transitions.get(currentState.getId());
         if (transitions == null) {
             return false;
         }
-        final T newState = transitions.get(by);
-        if (newState == null) {
+        final Integer newStateId = transitions.get(by);
+        if (newStateId == null) {
             return false;
         }
-        currentState = newState;
+        currentState = dfa.getStateById(newStateId);
         return true;
     }
 
     @Override
     public boolean isInFinalState() {
-        return currentState.isFinal();
+        return dfa.isFinal(currentState);
     }
 
     public T getCurrentState() {
