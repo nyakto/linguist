@@ -5,10 +5,7 @@ import ru.nyakto.linguist.grammar.NonTerminal;
 import ru.nyakto.linguist.grammar.Rule;
 import ru.nyakto.linguist.grammar.Terminal;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class LLParser {
     protected final AbstractGrammar grammar;
@@ -16,7 +13,7 @@ public class LLParser {
     protected final Set<NonTerminal> allowEmpty = new HashSet<>();
     protected final Map<NonTerminal, Set<Terminal>> startingTerminals = new HashMap<>();
     protected final Map<NonTerminal, Set<Terminal>> followingTerminals = new HashMap<>();
-    protected final Map<NonTerminal, Map<Terminal, Rule>> nonTerminalsMap = new HashMap<>();
+    protected final Map<NonTerminal, Map<Optional<Terminal>, Rule>> nonTerminalsMap = new HashMap<>();
 
     public LLParser(AbstractGrammar grammar) {
         this.grammar = grammar;
@@ -41,7 +38,7 @@ public class LLParser {
         return nonTerminals;
     }
 
-    public Map<Terminal, Rule> getNonTerminalRuleMap(NonTerminal nonTerminal) {
+    public Map<Optional<Terminal>, Rule> getNonTerminalRuleMap(NonTerminal nonTerminal) {
         return nonTerminalsMap.get(nonTerminal);
     }
 }

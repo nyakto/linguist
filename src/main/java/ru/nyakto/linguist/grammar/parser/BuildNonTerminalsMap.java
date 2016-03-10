@@ -3,31 +3,29 @@ package ru.nyakto.linguist.grammar.parser;
 import ru.nyakto.linguist.grammar.*;
 
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class BuildNonTerminalsMap implements RuleWalkerListener {
     private final LLParser parser;
+    private boolean allowEmpty = true;
 
     public BuildNonTerminalsMap(LLParser parser) {
         this.parser = parser;
     }
 
     public void execute() {
-        final Map<NonTerminal, List<Rule>> rulesByLhs = parser.grammar.stream()
-            .collect(Collectors.groupingBy(Rule::getLhs));
-        rulesByLhs.forEach((lhs, rules) -> {
-            rules.forEach((rule) -> {
-                RuleWalker.walk(rule, this);
-            });
-        });
+        for (Rule rule : parser.grammar) {
+            RuleWalker.walk(rule, this);
+            if (allowEmpty) {
+                commit(Optional.empty(), rule);
+            }
+        }
     }
 
     @Override
     public boolean visitTerminal(Rule rule, int position, Terminal item) {
-        commit(item, rule);
+        commit(Optional.of(item), rule);
+        allowEmpty = false;
         return false;
     }
 
@@ -35,14 +33,14 @@ public class BuildNonTerminalsMap implements RuleWalkerListener {
     public boolean visitNonTerminal(Rule rule, int position, NonTerminal item) {
         Optional.ofNullable(parser.startingTerminals.get(item))
             .ifPresent(terminals -> terminals.forEach(
-                terminal -> commit(terminal, rule)
+                terminal -> commit(Optional.of(terminal), rule)
             ));
-        return parser.allowEmpty.contains(item);
+        return allowEmpty = parser.allowEmpty.contains(item);
     }
 
-    private void commit(Terminal terminal, Rule rule) {
+    private void commit(Optional<Terminal> optionalTerminal, Rule rule) {
         parser.nonTerminalsMap.computeIfAbsent(
             rule.getLhs(), (key) -> new HashMap<>()
-        ).put(terminal, rule);
+        ).put(optionalTerminal, rule);
     }
 }
