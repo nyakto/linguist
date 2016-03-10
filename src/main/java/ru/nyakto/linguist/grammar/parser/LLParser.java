@@ -18,20 +18,10 @@ public class LLParser {
     public LLParser(AbstractGrammar grammar) {
         this.grammar = grammar;
         new FindAllNonTerminals(this).execute();
-        checkRuleSet();
         new FindEmptyAllowingNonTerminals(this).execute();
         new FindStartingTerminals(this).execute();
         new FindFollowingTerminals(this).execute();
-        checkForConflicts();
         new BuildNonTerminalsMap(this).execute();
-    }
-
-    private void checkRuleSet() {
-        // TODO: all non terminals must have rules
-    }
-
-    private void checkForConflicts() {
-        // TODO: search for Fi/Fi or Fi/Fo conflicts
     }
 
     public Set<NonTerminal> getNonTerminals() {
