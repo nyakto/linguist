@@ -24,6 +24,10 @@ public final class RuleWalker {
         return listener.visitNonTerminal(rule, position, item);
     }
 
+    protected boolean visitAction(Action item) {
+        return listener.visitAction(rule, position, item);
+    }
+
     public static void walk(Rule rule, int position, RuleWalkerListener listener) {
         final RuleWalker walker = new RuleWalker(rule, listener);
         final ListIterator<RuleItem> iterator = rule.getRhs().listIterator(position);
