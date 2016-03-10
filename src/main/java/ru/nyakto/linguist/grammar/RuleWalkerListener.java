@@ -8,4 +8,8 @@ public interface RuleWalkerListener {
     default public boolean visitNonTerminal(Rule rule, int position, NonTerminal item) {
         return true;
     }
+
+    default public boolean visitAction(Rule rule, int position, Action item) {
+        return true;
+    }
 }
