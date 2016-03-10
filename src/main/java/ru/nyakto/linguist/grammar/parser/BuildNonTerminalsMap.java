@@ -3,6 +3,7 @@ package ru.nyakto.linguist.grammar.parser;
 import ru.nyakto.linguist.grammar.*;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 
 class BuildNonTerminalsMap implements RuleWalkerListener {
@@ -42,6 +43,8 @@ class BuildNonTerminalsMap implements RuleWalkerListener {
     private void commit(Optional<Terminal> optionalTerminal, Rule rule) {
         parser.nonTerminalsMap.computeIfAbsent(
             rule.getLhs(), (key) -> new HashMap<>()
-        ).put(optionalTerminal, rule);
+        ).computeIfAbsent(
+            optionalTerminal, (key) -> new LinkedHashSet<>()
+        ).add(rule);
     }
 }
