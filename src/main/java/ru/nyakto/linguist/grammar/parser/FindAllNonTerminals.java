@@ -5,7 +5,7 @@ import ru.nyakto.linguist.grammar.Rule;
 import ru.nyakto.linguist.grammar.RuleWalker;
 import ru.nyakto.linguist.grammar.RuleWalkerListener;
 
-public class FindAllNonTerminals implements RuleWalkerListener {
+class FindAllNonTerminals implements RuleWalkerListener {
     private final LLParser parser;
 
     public FindAllNonTerminals(LLParser parser) {
