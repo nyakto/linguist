@@ -15,6 +15,7 @@ public class BuildNonTerminalsMap implements RuleWalkerListener {
 
     public void execute() {
         for (Rule rule : parser.grammar) {
+            allowEmpty = true;
             RuleWalker.walk(rule, this);
             if (allowEmpty) {
                 commit(Optional.empty(), rule);
