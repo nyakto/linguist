@@ -1,6 +1,6 @@
 package ru.nyakto.linguist.grammar.parser;
 
-import ru.nyakto.linguist.Grammar;
+import ru.nyakto.linguist.AbstractGrammar;
 import ru.nyakto.linguist.grammar.NonTerminal;
 import ru.nyakto.linguist.grammar.Terminal;
 
@@ -10,15 +10,31 @@ import java.util.Map;
 import java.util.Set;
 
 public class LLParser {
-    protected final Grammar grammar;
+    protected final AbstractGrammar grammar;
+    protected final Set<NonTerminal> nonTerminals = new HashSet<>();
     protected final Set<NonTerminal> allowEmpty = new HashSet<>();
     protected final Map<NonTerminal, Set<Terminal>> startingTerminals = new HashMap<>();
     protected final Map<NonTerminal, Set<Terminal>> followingTerminals = new HashMap<>();
 
-    public LLParser(Grammar grammar) {
+    public LLParser(AbstractGrammar grammar) {
         this.grammar = grammar;
+        new FindAllNonTerminals(this).execute();
+        checkRuleSet();
         new FindEmptyAllowingNonTerminals(this).execute();
         new FindStartingTerminals(this).execute();
         new FindFollowingTerminals(this).execute();
+        checkForConflicts();
+    }
+
+    private void checkRuleSet() {
+        // TODO: all non terminals must have rules
+    }
+
+    private void checkForConflicts() {
+        // TODO: search for Fi/Fi or Fi/Fo conflicts
+    }
+
+    public Set<NonTerminal> getNonTerminals() {
+        return nonTerminals;
     }
 }

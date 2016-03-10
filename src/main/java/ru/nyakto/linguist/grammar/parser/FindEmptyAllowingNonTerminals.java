@@ -15,7 +15,8 @@ class FindEmptyAllowingNonTerminals implements RuleWalkerListener {
     }
 
     public void execute() {
-        final List<Rule> task = new ArrayList<>(parser.grammar);
+        final List<Rule> task = new ArrayList<>();
+        parser.grammar.forEach(task::add);
         boolean modified;
         do {
             modified = false;

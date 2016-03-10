@@ -4,5 +4,5 @@ import ru.nyakto.linguist.grammar.Rule;
 
 import java.util.ArrayList;
 
-public class Grammar extends ArrayList<Rule> {
+public final class Grammar extends ArrayList<Rule> implements AbstractGrammar {
 }

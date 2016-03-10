@@ -2,7 +2,7 @@ package ru.nyakto.linguist.grammar;
 
 import java.util.ListIterator;
 
-public class RuleWalker {
+public final class RuleWalker {
     private final RuleWalkerListener listener;
     private int position;
     private RuleItem item;
