@@ -5,7 +5,7 @@ import ru.nyakto.linguist.grammar.*;
 import java.util.HashMap;
 import java.util.Optional;
 
-public class BuildNonTerminalsMap implements RuleWalkerListener {
+class BuildNonTerminalsMap implements RuleWalkerListener {
     private final LLParser parser;
     private boolean allowEmpty = true;
 
