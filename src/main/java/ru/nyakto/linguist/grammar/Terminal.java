@@ -13,7 +13,7 @@ public final class Terminal implements RuleItem {
 
     @Override
     public boolean visit(RuleWalker walker) {
-        return walker.visitTerminal();
+        return walker.visitTerminal(this);
     }
 
     @Override

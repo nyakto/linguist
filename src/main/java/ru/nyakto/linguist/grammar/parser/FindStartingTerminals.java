@@ -7,7 +7,6 @@ import java.util.*;
 class FindStartingTerminals implements RuleWalkerListener {
     private final LLParser parser;
     private final Map<NonTerminal, Set<NonTerminal>> deps = new HashMap<>();
-    private NonTerminal lhs;
 
     public FindStartingTerminals(LLParser parser) {
         this.parser = parser;
@@ -15,7 +14,6 @@ class FindStartingTerminals implements RuleWalkerListener {
 
     public void execute() {
         for (Rule rule : parser.grammar) {
-            lhs = rule.getLhs();
             RuleWalker.walk(rule, this);
         }
         ParserUtils.resolveDependencies(deps);
@@ -34,17 +32,17 @@ class FindStartingTerminals implements RuleWalkerListener {
     }
 
     @Override
-    public boolean visitTerminal(int position, Terminal item) {
+    public boolean visitTerminal(Rule rule, int position, Terminal item) {
         parser.startingTerminals.computeIfAbsent(
-            lhs, (key) -> new HashSet<>()
+            rule.getLhs(), (key) -> new HashSet<>()
         ).add(item);
         return false;
     }
 
     @Override
-    public boolean visitNonTerminal(int position, NonTerminal item) {
+    public boolean visitNonTerminal(Rule rule, int position, NonTerminal item) {
         deps.computeIfAbsent(
-            lhs, (key) -> new HashSet<>()
+            rule.getLhs(), (key) -> new HashSet<>()
         ).add(item);
         return parser.allowEmpty.contains(item);
     }

@@ -20,7 +20,7 @@ class FindAllNonTerminals implements RuleWalkerListener {
     }
 
     @Override
-    public boolean visitNonTerminal(int position, NonTerminal item) {
+    public boolean visitNonTerminal(Rule rule, int position, NonTerminal item) {
         parser.nonTerminals.add(item);
         return true;
     }

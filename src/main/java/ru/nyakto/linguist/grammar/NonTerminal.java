@@ -13,7 +13,7 @@ public final class NonTerminal implements RuleItem {
 
     @Override
     public boolean visit(RuleWalker walker) {
-        return walker.visitNonTerminal();
+        return walker.visitNonTerminal(this);
     }
 
     @Override

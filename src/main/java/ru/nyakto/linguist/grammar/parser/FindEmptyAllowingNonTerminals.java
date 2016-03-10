@@ -34,13 +34,13 @@ class FindEmptyAllowingNonTerminals implements RuleWalkerListener {
     }
 
     @Override
-    public boolean visitTerminal(int position, Terminal item) {
+    public boolean visitTerminal(Rule rule, int position, Terminal item) {
         emptyPossible = false;
         return false;
     }
 
     @Override
-    public boolean visitNonTerminal(int position, NonTerminal item) {
+    public boolean visitNonTerminal(Rule rule, int position, NonTerminal item) {
         if (parser.allowEmpty.contains(item)) {
             return true;
         }

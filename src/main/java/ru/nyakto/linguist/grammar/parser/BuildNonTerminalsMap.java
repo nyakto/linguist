@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 public class BuildNonTerminalsMap implements RuleWalkerListener {
     private final LLParser parser;
-    private Rule rule;
 
     public BuildNonTerminalsMap(LLParser parser) {
         this.parser = parser;
@@ -21,26 +20,27 @@ public class BuildNonTerminalsMap implements RuleWalkerListener {
             .collect(Collectors.groupingBy(Rule::getLhs));
         rulesByLhs.forEach((lhs, rules) -> {
             rules.forEach((rule) -> {
-                this.rule = rule;
                 RuleWalker.walk(rule, this);
             });
         });
     }
 
     @Override
-    public boolean visitTerminal(int position, Terminal item) {
-        commit(item);
+    public boolean visitTerminal(Rule rule, int position, Terminal item) {
+        commit(item, rule);
         return false;
     }
 
     @Override
-    public boolean visitNonTerminal(int position, NonTerminal item) {
+    public boolean visitNonTerminal(Rule rule, int position, NonTerminal item) {
         Optional.ofNullable(parser.startingTerminals.get(item))
-            .ifPresent(terminals -> terminals.forEach(this::commit));
+            .ifPresent(terminals -> terminals.forEach(
+                terminal -> commit(terminal, rule)
+            ));
         return parser.allowEmpty.contains(item);
     }
 
-    private void commit(Terminal terminal) {
+    private void commit(Terminal terminal, Rule rule) {
         parser.nonTerminalsMap.computeIfAbsent(
             rule.getLhs(), (key) -> new HashMap<>()
         ).put(terminal, rule);
