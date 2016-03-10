@@ -1,23 +1,23 @@
 package ru.nyakto.linguist.grammar;
 
-public final class NonTerminal implements RuleItem {
+public class NonTerminal implements RuleItem {
     private final int id;
 
     public NonTerminal(int id) {
         this.id = id;
     }
 
-    public int getId() {
+    public final int getId() {
         return id;
     }
 
     @Override
-    public boolean visit(RuleWalker walker) {
+    public final boolean visit(RuleWalker walker) {
         return walker.visitNonTerminal(this);
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public final boolean equals(Object obj) {
         if (this == obj) {
             return true;
         } else if (obj != null && obj instanceof NonTerminal) {
@@ -27,7 +27,7 @@ public final class NonTerminal implements RuleItem {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return id;
     }
 }

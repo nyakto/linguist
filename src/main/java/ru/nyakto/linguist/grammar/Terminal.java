@@ -1,23 +1,23 @@
 package ru.nyakto.linguist.grammar;
 
-public final class Terminal implements RuleItem {
+public class Terminal implements RuleItem {
     private final int id;
 
     public Terminal(int id) {
         this.id = id;
     }
 
-    public int getId() {
+    public final int getId() {
         return id;
     }
 
     @Override
-    public boolean visit(RuleWalker walker) {
+    public final boolean visit(RuleWalker walker) {
         return walker.visitTerminal(this);
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public final boolean equals(Object obj) {
         if (this == obj) {
             return true;
         } else if (obj != null && obj instanceof Terminal) {
@@ -27,7 +27,7 @@ public final class Terminal implements RuleItem {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return id;
     }
 }
